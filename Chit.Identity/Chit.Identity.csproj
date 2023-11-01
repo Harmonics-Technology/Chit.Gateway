@@ -10,9 +10,12 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
   <ItemGroup>
     <PackageReference Include="Chit.Context" Version="0.0.2" />
+    <PackageReference Include="Chit.Utilities" Version="0.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Treyt.Yarp.ReverseProxy.Swagger" Version="3.3.0" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="RSAKeys/" />
