@@ -7,7 +7,7 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Yarp.ReverseProxy.Swagger;
 
-namespace Chit.Identity.Utilities
+namespace Chit.Gateway.Utilities
 {
     public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
     {
@@ -23,7 +23,7 @@ namespace Chit.Identity.Utilities
 
             foreach (var cluster in _reverseProxyDocumentFilterConfig.Clusters)
             {
-                
+
                 options.SwaggerDoc(cluster.Key, new OpenApiInfo { Title = cluster.Key, Version = cluster.Key });
             }
 
@@ -34,6 +34,7 @@ namespace Chit.Identity.Utilities
             });
 
             options.DocumentFilterDescriptors = filterDescriptors;
+            options.OperationFilter<SwaggerHeaderFilters>();
         }
     }
 }

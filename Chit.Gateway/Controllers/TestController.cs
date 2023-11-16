@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Chit.Identity;
+namespace Chit.Gateway;
 
 [ApiController]
 [Route("api/[controller]")]

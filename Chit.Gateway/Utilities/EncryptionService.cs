@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace Chit.Identity;
+namespace Chit.Gateway;
 
 public class EncryptionService : IEncryptionService
 {
@@ -23,6 +23,7 @@ public class EncryptionService : IEncryptionService
         rsa.ImportFromPem(File.ReadAllText(certificateFullPath));
         // convert request to json string then to bytes array
         var bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
+        // increase the size of the array to fit the key
         var encryptedBytes = rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
         var encryptedString = Convert.ToBase64String(encryptedBytes);
         return encryptedString;

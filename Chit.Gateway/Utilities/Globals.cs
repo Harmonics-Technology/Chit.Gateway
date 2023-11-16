@@ -1,4 +1,4 @@
-﻿namespace Chit.Identity;
+﻿namespace Chit.Gateway;
 
 public class Globals
 {

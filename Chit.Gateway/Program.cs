@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Chit.Context;
-using Chit.Identity;
-using Chit.Identity.Utilities;
+using Chit.Gateway;
+using Chit.Gateway.Utilities;
 using Chit.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -39,6 +39,7 @@ builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwa
 builder.Services.AddSwaggerGen();
 // register service for request encryption
 builder.Services.AddTransient<RequestEncryptionsMiddleware>();
+builder.Services.AddTransient<SwaggerRequestEncryptionMiddleware>();
 
 var yarpConfiguration = builder.Configuration.GetSection("ReverseProxy");
 builder.Services
@@ -66,35 +67,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     // intercept requests coming from swagger and encrypt them
-    app.Use((context, next) =>
-    {
-        if (context.Request.Method == "GET" || context.Request.Method == "OPTIONS" || context.Request.ContentLength <= 0)
-        {
-            return next();
-        }
-        string referrer = context.Request.Headers["Referer"];
-        if (referrer != null && referrer.Contains("swagger"))
-        {
-            // var encryptedRequest = app.Services.GetRequiredService<IEncryptionService>().EncryptRequest(context.Request.Body);
-            // convert body from stream to json string
-            var body = context.Request.Body;
-            // confirm if the body is empty
-            // body.Seek(0, SeekOrigin.Begin);
-            var requestBody = new StreamReader(body).ReadToEndAsync().Result;
-            // body.Seek(0, SeekOrigin.Begin);
-            // convert json string to dynamic object
-            var request = JsonConvert.DeserializeObject<dynamic>(requestBody);
-            // encrypt the dynamic object
-            var encryptedRequest = app.Services.GetRequiredService<IEncryptionService>().EncryptRequest(request);
-
-            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new RequestModel
-            {
-                EncryptedRequest = encryptedRequest
-            })));
-        }
-        return next();
-        // decrypt response for swagger requests
-    });
+    app.UseSwaggerRequestEncryptionMiddleware();
 
     app.UseSwaggerUI(options =>
     {

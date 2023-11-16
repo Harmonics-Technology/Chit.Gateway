@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
 
-namespace Chit.Identity;
+namespace Chit.Gateway;
 
 // this middleware will decrypt the request before it hits the controller and encrypt the response before it leaves the controller
 public class RequestEncryptionsMiddleware : IMiddleware
