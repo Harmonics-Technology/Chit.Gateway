@@ -39,6 +39,8 @@ public class EncryptionService : IEncryptionService
         // var RSAParameters = rsa.ExportParameters(false);
         // var decryptedBytes = RSAHelper.RSADecrypt(Convert.FromBase64String(response), RSAParameters, false);
         var decryptedString = System.Text.Encoding.UTF8.GetString(decryptedBytes);
+        // use system.text.json to convert the decrypted string to the type T
+
         return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(decryptedString);
     }
 

@@ -24,7 +24,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
         // get the encrypted request from the body of the request
         var encryptedRequest = context.Request.Body;
         //parse the body of the request into the EncryptedRequestModel
-        // encryptedRequest.Seek(0, SeekOrigin.Begin);
+        encryptedRequest.Seek(0, SeekOrigin.Begin);
         var encryptedRequestBody = await new StreamReader(encryptedRequest).ReadToEndAsync();
         // encryptedRequest.Seek(0, SeekOrigin.Begin);
         var encryptedRequestModel = JsonConvert.DeserializeObject<RequestModel>(encryptedRequestBody);
@@ -33,26 +33,16 @@ public class RequestEncryptionsMiddleware : IMiddleware
         {
             var decryptedRequest = _encryptionService.DecryptResponse<dynamic>(encryptedRequestModel.EncryptedRequest);
             context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(decryptedRequest)));
+            // set request content length to the length of the new body
+            context.Request.ContentLength = context.Request.Body.Length;
+            // avoid issue with other middlewares reading the body
+            context.Request.Body.Position = 0;
+
+
         }
 
         // call next middleware
         await next(context);
-
-        // if (referrer != null && referrer.Contains("swagger"))
-        // {
-        //     memStream.Position = 0;
-        //     var swaggerResponseBody = new StreamReader(memStream).ReadToEnd();
-        //     var swagmemoryStreamModified = new MemoryStream();
-        //     var swagsw = new StreamWriter(swaggerResponseBody);
-        //     swagsw.Write(swaggerResponseBody);
-        //     swagsw.Flush();
-        //     swagmemoryStreamModified.Position = 0;
-
-        //     await swagmemoryStreamModified.CopyToAsync(originalBodyStream).ConfigureAwait(false);
-
-        //     context.Response.Body = originalBodyStream;
-        //     return;
-        // }
 
 
         memStream.Position = 0;
