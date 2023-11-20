@@ -24,7 +24,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
         // get the encrypted request from the body of the request
         var encryptedRequest = context.Request.Body;
         //parse the body of the request into the EncryptedRequestModel
-        encryptedRequest.Seek(0, SeekOrigin.Begin);
+        // encryptedRequest.Seek(0, SeekOrigin.Begin);
         var encryptedRequestBody = await new StreamReader(encryptedRequest).ReadToEndAsync();
         // encryptedRequest.Seek(0, SeekOrigin.Begin);
         var encryptedRequestModel = JsonConvert.DeserializeObject<RequestModel>(encryptedRequestBody);
@@ -36,7 +36,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
             // set request content length to the length of the new body
             context.Request.ContentLength = context.Request.Body.Length;
             // avoid issue with other middlewares reading the body
-            context.Request.Body.Position = 0;
+            // context.Request.Body.Position = 0;
 
 
         }

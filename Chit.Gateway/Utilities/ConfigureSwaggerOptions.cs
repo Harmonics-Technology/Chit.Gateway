@@ -27,6 +27,7 @@ namespace Chit.Gateway.Utilities
                 options.SwaggerDoc(cluster.Key, new OpenApiInfo { Title = cluster.Key, Version = cluster.Key });
             }
 
+            options.OperationFilter<SwaggerHeaderFilters>();
             filterDescriptors.Add(new FilterDescriptor
             {
                 Type = typeof(ReverseProxyDocumentFilter),
@@ -34,7 +35,6 @@ namespace Chit.Gateway.Utilities
             });
 
             options.DocumentFilterDescriptors = filterDescriptors;
-            options.OperationFilter<SwaggerHeaderFilters>();
         }
     }
 }

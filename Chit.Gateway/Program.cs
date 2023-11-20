@@ -5,7 +5,6 @@ using Chit.Gateway.Utilities;
 using Chit.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Yarp.ReverseProxy.Swagger;
 using Yarp.ReverseProxy.Swagger.Extensions;
@@ -74,7 +73,9 @@ if (app.Environment.IsDevelopment())
         var config = app.Services.GetRequiredService<IOptionsMonitor<ReverseProxyDocumentFilterConfig>>().CurrentValue;
         foreach (var cluster in config.Clusters)
         {
-            options.SwaggerEndpoint($"/swagger/{cluster.Key}/swagger.json", $"{cluster.Key.ToUpper()} Microservice");
+            options.SwaggerEndpoint($"/swagger/{cluster.Key}/swagger.json", $"{cluster.Key} Microservice");
+            options.DocumentTitle = $"{cluster.Key} Microservice";
+            
         }
     });
 }
