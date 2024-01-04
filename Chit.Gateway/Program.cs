@@ -1,6 +1,8 @@
 ﻿using System.Text;
 using Chit.Context;
+using Chit.Context.Models.IdentityModels;
 using Chit.Gateway;
+using Chit.Gateway.Extensions;
 using Chit.Gateway.Utilities;
 using Chit.Utilities;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +25,8 @@ builder.Services.Configure<Globals>(builder.Configuration.GetSection("AppSetting
 
 builder.Services.AddChitContext(new ChitContextOptions
 {
-    ConnectionString = connectionString
+    ConnectionString = connectionString,
+    Configuration = builder.Configuration
 });
 
 // add utilities to the service container
@@ -39,6 +42,14 @@ builder.Services.AddSwaggerGen();
 // register service for request encryption
 builder.Services.AddTransient<RequestEncryptionsMiddleware>();
 builder.Services.AddTransient<SwaggerRequestEncryptionMiddleware>();
+
+
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = ApiKeyAuthenticationOptions.DefaultScheme;
+//     options.DefaultChallengeScheme = ApiKeyAuthenticationOptions.DefaultScheme;
+// }).AddApiKeySupport(options => { });
+
 
 var yarpConfiguration = builder.Configuration.GetSection("ReverseProxy");
 builder.Services
@@ -79,22 +90,18 @@ if (app.Environment.IsDevelopment())
         }
     });
 }
-app.UseHttpsRedirection();
-
-// .SetIsOriginAllowed(origin => true)); // allow any origin
-// .AllowCredentials());
 
 app.UseRouting();
 // add a decryption middleware to decrypt the request before it hits the controller
 
-app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllers();
-
-
-app.UseRequestEncryptionsMiddleware();
-
 app.MapReverseProxy();
+
+
+app.UseHttpsRedirection();
+app.UseRequestEncryptionsMiddleware();
 // add an encryption middleware to encrypt the response before it leaves the controller
 
 app.Run();

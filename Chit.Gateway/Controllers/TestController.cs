@@ -1,4 +1,5 @@
 ﻿using Chit.Context;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,7 @@ public class TestController : ControllerBase
     }
 
     [HttpGet]
+    // [Authorize]
     public async Task<IActionResult> Get()
     {
         var newChit = new
