@@ -7,6 +7,13 @@ using Chit.Gateway.Utilities;
 using Chit.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Serilog;
+using Serilog.Enrichers.Span;
+using Serilog.Exceptions;
+using Serilog.Exceptions.Core;
+using Serilog.Exceptions.Destructurers;
+using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
+using Serilog.Exceptions.Refit.Destructurers;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Yarp.ReverseProxy.Swagger;
 using Yarp.ReverseProxy.Swagger.Extensions;
@@ -28,6 +35,18 @@ builder.Services.AddChitContext(new ChitContextOptions
     ConnectionString = connectionString,
     Configuration = builder.Configuration
 });
+
+builder.Host.UseSerilog((_, config) => config
+            .ReadFrom.Configuration(configuration)
+            .Enrich.WithSpan()
+            .Enrich.WithExceptionDetails(new DestructuringOptionsBuilder()
+                .WithDefaultDestructurers()
+                .WithDestructurers(new IExceptionDestructurer[]
+                {
+                    new DbUpdateExceptionDestructurer(),
+                    new ApiExceptionDestructurer()
+                }))
+            .Enrich.WithDemystifiedStackTraces());
 
 // add utilities to the service container
 builder.Services.AddUtilities(builder.Configuration);

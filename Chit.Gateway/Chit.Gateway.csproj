@@ -14,6 +14,14 @@
     <PackageReference Include="Treyt.Yarp.ReverseProxy.Swagger" Version="3.3.0" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Demystifier" Version="1.0.2" />
+    <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0+build.538" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0+build.694" />
+    <PackageReference Include="Serilog.Exceptions.EntityFrameworkCore" Version="8.4.0+build.694" />
+    <PackageReference Include="Serilog.Exceptions.Refit" Version="8.4.0+build.694" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="2.0.0" />
+    <PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.2.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="RSAKeys/" />
