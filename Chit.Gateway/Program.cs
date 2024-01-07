@@ -90,6 +90,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+app.UseChitExceptionHandler();
+
 app.UseCors("AllowAll");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -116,10 +119,10 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.MapControllers();
+
+
+// app.UseHttpsRedirection();
 app.MapReverseProxy();
-
-
-app.UseHttpsRedirection();
 app.UseRequestEncryptionsMiddleware();
 // add an encryption middleware to encrypt the response before it leaves the controller
 

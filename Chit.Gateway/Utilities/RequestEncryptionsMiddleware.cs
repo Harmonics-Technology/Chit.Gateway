@@ -7,19 +7,25 @@ namespace Chit.Gateway;
 public class RequestEncryptionsMiddleware : IMiddleware
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly ILogger<RequestEncryptionsMiddleware> _logger;
 
-    public RequestEncryptionsMiddleware(IEncryptionService encryptionService)
+    public RequestEncryptionsMiddleware(IEncryptionService encryptionService, ILogger<RequestEncryptionsMiddleware> logger)
     {
         _encryptionService = encryptionService;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         string referrer = context.Request.Headers["Referer"];
+
+        var originBody = context.Response.Body;
+        using var newBody = new MemoryStream();
+        context.Response.Body = newBody;
         var originalBodyStream = context.Response.Body;
 
         var memStream = new MemoryStream();
-        context.Response.Body = memStream;
+        // context.Response.Body = memStream;
         // decrypt request
         // get the encrypted request from the body of the request
         var encryptedRequest = context.Request.Body;
@@ -45,34 +51,40 @@ public class RequestEncryptionsMiddleware : IMiddleware
         await next(context);
 
 
-        memStream.Position = 0;
-        var responseBody = new StreamReader(memStream).ReadToEnd();
-
-        // encrypt response
-        if (referrer == null || !referrer.Contains("swagger"))
+        try
         {
+            memStream.Position = 0;
+            var responseBody = new StreamReader(memStream).ReadToEnd();
 
-            var encryptedResponse = _encryptionService.EncryptRequest(responseBody);
-            // parse the body of the response into the EncryptedRequestModel
-
-            var responseToReturn = new RequestModel
+            // encrypt response
+            if (referrer == null || !referrer.Contains("swagger"))
             {
-                EncryptedResponse = encryptedResponse
-            };
-            responseBody = JsonConvert.SerializeObject(responseToReturn);
+
+                await ModifyResponseBody(context);
+                // var encryptedResponse = _encryptionService.EncryptRequest(responseBody);
+                // // parse the body of the response into the EncryptedRequestModel
+
+                // var responseToReturn = new RequestModel
+                // {
+                //     EncryptedResponse = encryptedResponse
+                // };
+                // var serializedResponse = JsonConvert.SerializeObject(responseToReturn);
+                // _logger.LogInformation("serializedResponse: {serializedResponse}", serializedResponse);
+                // context.Response.ContentLength = serializedResponse.Length;
+                // responseBody = serializedResponse;
+            }
+
+            // stringify the response
+
+            newBody.Seek(0, SeekOrigin.Begin);
+            await newBody.CopyToAsync(originBody);
+            context.Response.Body = originBody;
         }
-
-        // stringify the response
-
-        var memoryStreamModified = new MemoryStream();
-        var sw = new StreamWriter(memoryStreamModified);
-        sw.Write(responseBody);
-        sw.Flush();
-        memoryStreamModified.Position = 0;
-
-        await memoryStreamModified.CopyToAsync(originalBodyStream).ConfigureAwait(false);
-
-        context.Response.Body = originalBodyStream;
+        catch (Exception ex)
+        {
+            _logger.LogError("Error encrypting response body {ex}", ex);
+            throw;
+        }
 
         // encrypt response
         // var response = context.Response.Body;
@@ -82,6 +94,29 @@ public class RequestEncryptionsMiddleware : IMiddleware
         // // response.Seek(0, SeekOrigin.Begin);
         // var responseModel = JsonConvert.DeserializeObject<dynamic>(responseBody);
 
+    }
+
+    private async Task ModifyResponseBody(HttpContext context)
+    {
+        var originalBodyStream = context.Response.Body;
+
+        originalBodyStream.Seek(0, SeekOrigin.Begin);
+        var originalResponseBody = await new StreamReader(originalBodyStream).ReadToEndAsync();
+        var encryptedResponse = _encryptionService.EncryptWithAES(originalResponseBody);
+
+        var responseToReturn = new RequestModel
+        {
+            EncryptedResponse = encryptedResponse.IV + encryptedResponse.data + encryptedResponse.Key
+        };
+
+        var serializedResponse = JsonConvert.SerializeObject(responseToReturn);
+
+        originalBodyStream.SetLength(0);
+
+        await originalBodyStream.WriteAsync(Encoding.UTF8.GetBytes(serializedResponse));
+
+        context.Response.Body = originalBodyStream;
+        context.Response.ContentLength = originalBodyStream.Length;
     }
 }
 
