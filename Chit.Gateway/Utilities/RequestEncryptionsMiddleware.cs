@@ -37,7 +37,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
         // encryptedRequest.Seek(0, SeekOrigin.Begin);
         var encryptedRequestModel = JsonConvert.DeserializeObject<RequestModel>(encryptedRequestBody);
 
-        if (encryptedRequestModel != null)
+        if (encryptedRequestModel?.EncryptedRequest != null)
         {
             var encryptedRequestParts = Encoding.UTF8.GetString(Convert.FromBase64String(encryptedRequestModel.EncryptedRequest)).Split("||");
             var decryptedRequest = _encryptionService.DecryptWithAES<dynamic>(encryptedRequestParts[1], encryptedRequestParts[0], encryptedRequestParts[2]);
@@ -59,7 +59,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
             var responseBody = new StreamReader(memStream).ReadToEnd();
 
             // encrypt response
-            if (referrer == null || !referrer.Contains("swagger"))
+            if (referrer == null || !referrer.Contains("swagger") || context.Request.Path.Value.Contains("test"))
             {
 
                 await ModifyResponseBody(context);

@@ -1,4 +1,5 @@
-﻿using Chit.Context;
+﻿using System.Text;
+using Chit.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,21 @@ public class TestController : ControllerBase
         Console.WriteLine(model);
         return Ok(model);
     }
+
+    [HttpPost("encrypt")]
+    public async Task<ActionResult> EncryptSomething(SomethingModel model)
+    {
+        var encryptedRequest = _encryptionService.EncryptWithAES(model.JsonToEncrypt);
+        return Ok(encryptedRequest);
+    }
+
+    [HttpPost("decrypt")]
+    public async Task<ActionResult> DecryptSomething(SomethingModel model)
+    {
+        var encryptedRequestParts = Encoding.UTF8.GetString(Convert.FromBase64String(model.StringToDecrypt)).Split("||");
+        var decryptedRequest = _encryptionService.DecryptWithAES<dynamic>(encryptedRequestParts[1], encryptedRequestParts[0], encryptedRequestParts[2]);
+        return Ok(decryptedRequest);
+    }
 }
 
 
@@ -57,4 +73,7 @@ public class SomethingModel
 {
     public string Name { get; set; }
     public string Description { get; set; }
+
+    public string JsonToEncrypt { get; set; }
+    public string StringToDecrypt { get; set; }
 }

@@ -107,7 +107,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
 {
     app.UseSwagger();
     // intercept requests coming from swagger and encrypt them
-    app.UseSwaggerRequestEncryptionMiddleware();
+    // app.UseSwaggerRequestEncryptionMiddleware();
 
     app.UseSwaggerUI(options =>
     {
@@ -133,7 +133,7 @@ app.MapReverseProxy();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseRequestEncryptionsMiddleware();
+// app.UseRequestEncryptionsMiddleware();
 // add an encryption middleware to encrypt the response before it leaves the controller
 
 app.Run();
