@@ -34,11 +34,11 @@ public class SwaggerRequestEncryptionMiddleware : IMiddleware
                 // convert json string to dynamic object
                 var request = JsonConvert.DeserializeObject<dynamic>(requestBody);
                 // encrypt the dynamic object
-                var encryptedRequest = _encryptionService.EncryptRequest(request);
+                var encryptedRequest = _encryptionService.EncryptWithAES(request);
 
                 context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new RequestModel
                 {
-                    EncryptedRequest = encryptedRequest
+                    EncryptedRequest = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{encryptedRequest.IV}||{encryptedRequest.data}||{encryptedRequest.Key}"))
                 })));
                 await next(context);
             }

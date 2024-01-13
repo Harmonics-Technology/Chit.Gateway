@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using Chit.Utilities;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 
 namespace Chit.Gateway;
@@ -37,7 +39,8 @@ public class RequestEncryptionsMiddleware : IMiddleware
 
         if (encryptedRequestModel != null)
         {
-            var decryptedRequest = _encryptionService.DecryptResponse<dynamic>(encryptedRequestModel.EncryptedRequest);
+            var encryptedRequestParts = Encoding.UTF8.GetString(Convert.FromBase64String(encryptedRequestModel.EncryptedRequest)).Split("||");
+            var decryptedRequest = _encryptionService.DecryptWithAES<dynamic>(encryptedRequestParts[1], encryptedRequestParts[0], encryptedRequestParts[2]);
             context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(decryptedRequest)));
             // set request content length to the length of the new body
             context.Request.ContentLength = context.Request.Body.Length;
@@ -51,8 +54,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
         await next(context);
 
 
-        try
-        {
+
             memStream.Position = 0;
             var responseBody = new StreamReader(memStream).ReadToEnd();
 
@@ -61,17 +63,6 @@ public class RequestEncryptionsMiddleware : IMiddleware
             {
 
                 await ModifyResponseBody(context);
-                // var encryptedResponse = _encryptionService.EncryptRequest(responseBody);
-                // // parse the body of the response into the EncryptedRequestModel
-
-                // var responseToReturn = new RequestModel
-                // {
-                //     EncryptedResponse = encryptedResponse
-                // };
-                // var serializedResponse = JsonConvert.SerializeObject(responseToReturn);
-                // _logger.LogInformation("serializedResponse: {serializedResponse}", serializedResponse);
-                // context.Response.ContentLength = serializedResponse.Length;
-                // responseBody = serializedResponse;
             }
 
             // stringify the response
@@ -79,21 +70,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
             newBody.Seek(0, SeekOrigin.Begin);
             await newBody.CopyToAsync(originBody);
             context.Response.Body = originBody;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Error encrypting response body {ex}", ex);
-            throw;
-        }
-
-        // encrypt response
-        // var response = context.Response.Body;
-        // //parse the body of the response into the EncryptedRequestModel
-        // // response.Seek(0, SeekOrigin.Begin);
-        // var responseBody = await new StreamReader(response).ReadToEndAsync();
-        // // response.Seek(0, SeekOrigin.Begin);
-        // var responseModel = JsonConvert.DeserializeObject<dynamic>(responseBody);
-
+            // context.Response.ContentLength = responseBody.Length;
     }
 
     private async Task ModifyResponseBody(HttpContext context)
@@ -106,7 +83,7 @@ public class RequestEncryptionsMiddleware : IMiddleware
 
         var responseToReturn = new RequestModel
         {
-            EncryptedResponse = encryptedResponse.IV + encryptedResponse.data + encryptedResponse.Key
+            EncryptedResponse = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{encryptedResponse.IV}||{encryptedResponse.data}||{encryptedResponse.Key}"))
         };
 
         var serializedResponse = JsonConvert.SerializeObject(responseToReturn);
@@ -114,9 +91,11 @@ public class RequestEncryptionsMiddleware : IMiddleware
         originalBodyStream.SetLength(0);
 
         await originalBodyStream.WriteAsync(Encoding.UTF8.GetBytes(serializedResponse));
+        // flush the stream
+        await originalBodyStream.FlushAsync();
 
         context.Response.Body = originalBodyStream;
-        context.Response.ContentLength = originalBodyStream.Length;
+        // context.Response.ContentLength = serializedResponse.Length;
     }
 }
 

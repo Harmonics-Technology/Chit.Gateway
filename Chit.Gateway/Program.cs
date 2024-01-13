@@ -5,6 +5,7 @@ using Chit.Gateway;
 using Chit.Gateway.Extensions;
 using Chit.Gateway.Utilities;
 using Chit.Utilities;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog;
@@ -63,11 +64,17 @@ builder.Services.AddTransient<RequestEncryptionsMiddleware>();
 builder.Services.AddTransient<SwaggerRequestEncryptionMiddleware>();
 
 
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = ApiKeyAuthenticationOptions.DefaultScheme;
-//     options.DefaultChallengeScheme = ApiKeyAuthenticationOptions.DefaultScheme;
-// }).AddApiKeySupport(options => { });
+builder.WebHost.ConfigureKestrel(kestrelServerOptions=>
+{
+    kestrelServerOptions.ResponseHeaderEncodingSelector = _ => System.Text.Encoding.UTF8;
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CustomAuthenticationOptions.DefaultScheme;
+    options.DefaultChallengeScheme = CustomAuthenticationOptions.DefaultScheme;
+
+}).AddScheme<CustomAuthenticationOptions, CustomAuthenticationHandler>(CustomAuthenticationOptions.DefaultScheme, options => {});
 
 
 var yarpConfiguration = builder.Configuration.GetSection("ReverseProxy");
@@ -88,6 +95,7 @@ builder.Services.AddCors(options =>
 
 
 
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
@@ -95,7 +103,7 @@ app.UseChitExceptionHandler();
 
 app.UseCors("AllowAll");
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Local"))
 {
     app.UseSwagger();
     // intercept requests coming from swagger and encrypt them
@@ -108,7 +116,7 @@ if (app.Environment.IsDevelopment())
         {
             options.SwaggerEndpoint($"/swagger/{cluster.Key}/swagger.json", $"{cluster.Key} Microservice");
             options.DocumentTitle = $"{cluster.Key} Microservice";
-            
+
         }
     });
 }
@@ -116,13 +124,15 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 // add a decryption middleware to decrypt the request before it hits the controller
 
-app.UseAuthentication();
 
 app.MapControllers();
 
 
 // app.UseHttpsRedirection();
 app.MapReverseProxy();
+
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRequestEncryptionsMiddleware();
 // add an encryption middleware to encrypt the response before it leaves the controller
 
